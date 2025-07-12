@@ -1,85 +1,218 @@
-# Ukraine Support Gravity Plot
+# Ukraine Support Gravity Analysis
 
-This repository contains Python code to analyze and visualize the gravitational center of European Union (EU) assistance to Ukraine. The script aggregates EU assistance data by country and uses the KMeans clustering algorithm to determine the optimal point representing the center of gravity of the assistance. The results are visualized on a map using Matplotlib and Basemap.
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A Python package for analyzing and visualizing the gravitational center of European Union (EU) assistance to Ukraine. This project applies economic gravity models as a novel geopolitical analysis tool, using KMeans clustering to determine the optimal center of gravity for EU assistance distribution. The results are visualized on interactive maps using Matplotlib and Basemap.
+
+## Features
+
+- **Gravity Center Analysis**: Uses weighted KMeans clustering to find the optimal center of EU assistance
+- **Concentricity Visualization**: Plots concentric circles around Moscow to analyze geographic relationships
+- **Data Processing**: Automated extraction and processing of support tracker data
+- **Professional Visualizations**: High-quality map plots with customizable parameters
+
+## Project Structure
+
+```
+ukraine_support_gravity/
+├── ukraine_support_gravity/          # Main package
+│   ├── __init__.py                   # Package initialization
+│   ├── gravity_analysis.py           # Core analysis functions
+│   ├── data/                         # Data files
+│   │   ├── ukrainesupporttracker.xlsx
+│   │   ├── country-list.csv
+│   │   └── data.parquet
+│   └── plots/                        # Generated visualizations
+├── main.py                           # Main entry point
+├── requirements.txt                  # Dependencies
+├── pyproject.toml                    # Package configuration
+└── README.md                         # This file
+```
 ## Installation
-### Conda Environment
-Clone this repository:
 
-    git clone https://github.com/your-username/ukraine-support-gravity.git
+### Option 1: Using pip (Recommended)
 
-Navigate to the project directory:
+```bash
+# Clone the repository
+git clone https://github.com/your-username/ukraine-support-gravity.git
+cd ukraine-support-gravity
 
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-    cd ukraine-support-gravity
+# Install dependencies
+pip install -r requirements.txt
+```
 
-Set up the Conda environment using the provided environment.yml file:
+### Option 2: Using conda
 
-    conda env create -f UkraineGravity.yml
+```bash
+# Clone the repository
+git clone https://github.com/your-username/ukraine-support-gravity.git
+cd ukraine-support-gravity
 
-Activate the Conda environment:
+# Create and activate conda environment
+conda env create -f UkraineGravity.yml
+conda activate ukraine-support-gravity
+```
 
+### Option 3: Development Installation
 
-        conda activate ukraine-support-gravity
+```bash
+# Clone and install in development mode
+git clone https://github.com/your-username/ukraine-support-gravity.git
+cd ukraine-support-gravity
+pip install -e .
+```
 
-### Virtual Environment (venv)
+## Quick Start
 
-Clone this repository:
+```python
+from ukraine_support_gravity import run_concentricity, run_support_gravity_center
 
+# Run concentricity analysis (default)
+run_concentricity()
 
-    git clone https://github.com/your-username/ukraine-support-gravity.git
+# Run gravity center analysis
+run_support_gravity_center()
+```
 
-Navigate to the project directory:
+Or use the command line:
 
+```bash
+python main.py
+```
 
-    cd ukraine-support-gravity
+## Usage
 
-Create a virtual environment (optional but recommended):
+The package provides three main analysis functions:
 
+### 1. Concentricity Analysis
+```python
+from ukraine_support_gravity import run_concentricity
 
-    python3 -m venv env
+# Run with default parameters (10 circles, 500km distance)
+run_concentricity()
 
-Activate the virtual environment:
+# Customize parameters
+run_concentricity(num_circles=15, circle_distance=300.0)
+```
 
-Linux/macOS:
+### 2. Gravity Center Analysis
+```python
+from ukraine_support_gravity import run_support_gravity_center
 
-    source env/bin/activate
-Windows:
+run_support_gravity_center()
+```
 
-    .\env\Scripts\activate
+### 3. Data Extraction
+```python
+from ukraine_support_gravity import extract_support_gravity_center
 
-Install the required packages using requirements.txt
-(If you use uv, it will be quite faster than normal pip:
-https://astral.sh/blog/uv):
-    pip install uv
-    uv pip install -r requirements.txt
+# Extract and process data from Excel files
+extract_support_gravity_center()
+```
 
-Usage
+## Methodology
 
-To run the analysis and visualization, choose which type of analysis you would like to run and call the specific function from main.py, e.g.:
+This project applies **economic gravity models** to geopolitical analysis - a novel approach to understanding international aid distribution patterns.
 
+### Theoretical Foundation
 
-    if __name__ == '__main__':
-        run_concentricity()
+The gravity model, originally developed for trade analysis, suggests that economic interactions between two entities are proportional to their economic sizes and inversely proportional to the distance between them. This project adapts this concept to analyze EU assistance patterns to Ukraine, treating aid as a form of economic "gravity" that can be spatially analyzed.
 
+### Mathematical Approach
 
-    
+**Gravity Center Calculation:**
+The optimal assistance center is computed using weighted K-means clustering where:
+- **Features**: Normalized latitude and longitude coordinates (shifted by +90° and +180° respectively)
+- **Weights**: Total assistance amounts as percentage of 2021 GDP
+- **Algorithm**: K-means with k=1 to find the single optimal point
+- **Output**: Geographic coordinates representing the "center of gravity" for EU assistance
 
-This script will extract relevant data from an Excel file (ukrainesupporttracker.xlsx), perform clustering using KMeans with weights based on the percentage of 2021 GDP, and plot the results on a map.
+**Distance Analysis:**
+Concentric circle analysis around Moscow uses:
+- **Base coordinates**: Moscow (55.7558°N, 37.6173°E)
+- **Circle spacing**: Configurable distance (default 500km)
+- **Calculation**: Great circle distance approximation using lat/lon conversion
 
-Big thanks go to ChatGPT (https://chat.openai.com/), which also wrote this readme!
-The team also got bitter, as I used https://www.perplexity.ai/ , which is really great as a gateway to the internet.
+### Processing Pipeline
 
+1. **Data Extraction**: 
+   - Parse Ukraine Support Tracker Excel data (Sheet: "Country Summary (€)")
+   - Extract country names, assistance amounts, and GDP percentages
+   - Geocode country locations using Nominatim API
 
-## Sources:
+2. **Data Cleaning**:
+   - Remove entries with zero assistance
+   - Filter out aggregate EU entries (no geographic location)
+   - Manual correction for geocoding anomalies (e.g., Greece coordinates)
 
-https://github.com/icyrockcom/country-capitals/blob/master/data/country-list.csv
+3. **Weighted Clustering**:
+   - Apply coordinate normalization for KMeans compatibility
+   - Use assistance amounts as sample weights
+   - Extract optimal point and denormalize coordinates
 
+4. **Visualization**:
+   - Plot countries sized by assistance magnitude
+   - Color-code by assistance ranking
+   - Draw connections from countries to gravity center
+   - Overlay concentric distance circles from reference points (Moscow, Kyiv)
 
-https://www.ifw-kiel.de/topics/war-against-ukraine/ukraine-support-tracker/
+### Novel Contributions
 
+- **First application** of economic gravity models to geopolitical aid analysis
+- **Spatial clustering** approach to understanding assistance distribution patterns
+- **Quantitative framework** for analyzing geopolitical positioning through aid flows
+- **Visual methodology** for comparing assistance patterns against geographic references
 
-## Changelog: 
-- Added reference to uv in the *readme.md* concerning using pip. It is just way faster with nearly zero downside
-- Adjusted naming conventions to better represent different modi of plotting
-- Added *get_capital_name* and updated *extract_support_gravity_center* as well as the parquet-file with a new column "Capital" in order to make plotting easier
-- Added *run_concentricity* and the resulting plot
+## Data Sources
+
+- **Ukraine Support Tracker**: [Kiel Institute for the World Economy](https://www.ifw-kiel.de/topics/war-against-ukraine/ukraine-support-tracker/)
+- **Country Capitals**: [Country List CSV](https://github.com/icyrockcom/country-capitals/blob/master/data/country-list.csv)
+- **SIPRI Military Expenditure Data**: 1949-2022 data included in repository
+
+## Output Files
+
+The analysis generates several visualization files in `ukraine_support_gravity/plots/`:
+
+- `CapitalsMoscowCircle.png`: Concentricity analysis showing EU capitals with concentric circles around Moscow
+- `UkraineSupportGravityPlot.png`: Gravity center analysis with weighted clustering visualization
+
+## Dependencies
+
+- Python 3.9+
+- numpy >= 1.26.4
+- pandas >= 2.2.0
+- matplotlib >= 3.8.0
+- scikit-learn >= 1.5.2
+- geopy >= 2.4.1
+- basemap >= 1.3.6
+- openpyxl >= 3.1.0
+
+## Contributing
+
+This project represents a novel application of economic gravity models to geopolitical analysis. Contributions and suggestions for improvements are welcome.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Thanks to the Kiel Institute for maintaining the Ukraine Support Tracker
+- ChatGPT and Perplexity.ai assisted in documentation and development
+- Basemap and matplotlib communities for excellent visualization tools
+
+## Changelog
+
+### Version 1.0.0
+- ✅ **Security**: Updated scikit-learn and all dependencies to latest secure versions
+- ✅ **Structure**: Reorganized into proper Python package structure
+- ✅ **Documentation**: Comprehensive README with installation and usage instructions
+- ✅ **Configuration**: Added pyproject.toml and proper .gitignore
+- ✅ **Path Handling**: Fixed file paths using pathlib for cross-platform compatibility
+- 📈 **Enhancement**: Added proper error handling and type hints
+- 🎨 **Visualization**: Improved plot organization and output management

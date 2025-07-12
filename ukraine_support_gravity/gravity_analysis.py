@@ -1,7 +1,15 @@
+"""
+Ukraine Support Gravity Analysis Module
+
+This module contains functions for analyzing and visualizing the gravitational center
+of European Union assistance to Ukraine using KMeans clustering and geographic data.
+"""
+
 import numpy as np
 import pandas as pd
 from matplotlib import colors
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 from mpl_toolkits.basemap import Basemap
 from geopy.geocoders import Nominatim
@@ -10,11 +18,16 @@ from sklearn.cluster import KMeans
 
 def run_concentricity(num_circles: int = 10, circle_distance: float = 500.0):
     """
-    Reads the data and plots the capital with a specific color scheme.
-    After that plots Kiyv and Mocscow with concentric circles off 500 km distance.
-    Adds label for all capitals.    
+    Reads the data and plots capitals with a specific color scheme.
+    Plots Kiev and Moscow with concentric circles of 500 km distance.
+    Adds labels for all capitals.
+    
+    Args:
+        num_circles (int): Number of concentric circles to draw around Moscow
+        circle_distance (float): Distance between circles in kilometers
     """
-    data = pd.read_parquet("data.parquet")
+    data_path = Path(__file__).parent / "data" / "data.parquet"
+    data = pd.read_parquet(data_path)
     data.sort_values(by=["Total Assistance"], inplace=True, ascending=False)
 
     num_steps = len(data)
@@ -74,7 +87,9 @@ def run_concentricity(num_circles: int = 10, circle_distance: float = 500.0):
     plt.title(
         "Capital sizes are scaled by support given/GDP, coloring represents that order \n Kyiv and Mocscow have unscaled size(would imply 1% of GDP as aid).")
     plt.legend(loc='center left', bbox_to_anchor=(-0.25, 0.5))
-    plt.savefig("CapitalsMoscowCircle.png", format="png", dpi=300)
+    plots_path = Path(__file__).parent / "plots"
+    plots_path.mkdir(exist_ok=True)
+    plt.savefig(plots_path / "CapitalsMoscowCircle.png", format="png", dpi=300)
     plt.show()
 
 
@@ -82,7 +97,8 @@ def run_support_gravity_center():
     """
     Aggregating function to run the clustering and plot the result
     """
-    data = pd.read_parquet("data.parquet")
+    data_path = Path(__file__).parent / "data" / "data.parquet"
+    data = pd.read_parquet(data_path)
     point = simple_weights(data)
     plot_support_gravity_center(data, point)
 
@@ -132,7 +148,9 @@ def plot_support_gravity_center(data, point):
         "If clustered by KMeans using % of 2021 BIP as weight (indicated by linewidth)")
     fig.suptitle(
         "Gravitation Center of EU Assistance to Ukraine", fontsize=20, y=.95)
-    plt.savefig("UkraineSupportGravityPlot.png", format="png", dpi=300)
+    plots_path = Path(__file__).parent / "plots"
+    plots_path.mkdir(exist_ok=True)
+    plt.savefig(plots_path / "UkraineSupportGravityPlot.png", format="png", dpi=300)
     plt.show()
 
 
@@ -141,9 +159,11 @@ def extract_support_gravity_center() -> None:
     Extracts the relevant data from the excel file, drops first, last and EU-lines(no geolocation).
     Saves the result as a parquet file after renaming the second column.
     """
-    data = pd.read_excel(io="ukrainesupporttracker.xlsx",
+    data_dir = Path(__file__).parent / "data"
+    
+    data = pd.read_excel(io=data_dir / "ukrainesupporttracker.xlsx",
                          sheet_name="Country Summary (€)", skiprows=10, usecols="B,C, Q")
-    capitals = pd.read_csv("country-list.csv", index_col=0, usecols=[0, 1,])
+    capitals = pd.read_csv(data_dir / "country-list.csv", index_col=0, usecols=[0, 1,])
     data.drop(data[data.iloc[:, 1] == 0].index, inplace=True)
     data.drop(data.index[-1], inplace=True)
     data.drop(data.index[0], inplace=True)
@@ -161,7 +181,7 @@ def extract_support_gravity_center() -> None:
     # Greece gets strange data?
     data._set_value(11, "Latitudes", 37.98381)
     data._set_value(11, "Longitudes", 23.727539)
-    data.to_parquet("data.parquet")
+    data.to_parquet(data_dir / "data.parquet")
     # Print to check if everything went well
     print(data)
 
